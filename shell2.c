@@ -1,15 +1,54 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <fcntl.h>
-#include "stdio.h"
-#include "errno.h"
-#include "stdlib.h"
-#include "unistd.h"
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
-
-#define _SVID_SOURCE 1
 #include <termios.h>
 #include <signal.h>
+#include <stdbool.h>
+#define _SVID_SOURCE 1
+
+typedef struct pair{
+    char* key;
+    char *val;
+}pair;
+
+struct pair vars[100];
+
+int position = 0;
+
+void insert(char *n_key , char *n_val)
+{
+    for(int k = 0; k < position; k++)
+    {
+        if(!strcmp(n_key , vars[k].key))
+        {
+            vars[k].val = n_val;
+            return;
+        }
+    }
+    pair tmp_pair;
+    tmp_pair.key = n_key;
+    tmp_pair.val = n_val;
+    vars[position] = tmp_pair;
+    position++; 
+}
+
+
+char* get(char *n_key)
+{
+    for(int k = 0; k < position; k++)
+    {
+        if(!strcmp(n_key , vars[k].key))
+        {
+            return vars[k].val;
+        }
+    }
+    return "";
+}
 
 void handler_func(int sigg);
 
@@ -139,6 +178,24 @@ while (1)
     {
         chdir(argv[1]);
         continue;
+    }
+
+    //q10 - checks if the firs word of the command is $...
+    if(argv[0][0] == '$')
+    {
+        char* key = argv[0];
+        char *val = argv[2];
+        insert(key , val);
+        continue;
+    }
+    if (! strcmp(argv[0], "echo") && argv[1][0]=='$') 
+    {
+        char *ans = get(argv[1]);
+        if(strcmp(ans , ""))
+        {
+            printf("%s\n" , ans);
+            continue;
+        }
     }
 
     
