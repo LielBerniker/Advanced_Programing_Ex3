@@ -12,46 +12,46 @@
 #define _SVID_SOURCE 1
 
 typedef struct pair{
-    char* key;
+    char *key;
     char *val;
 }pair;
 
-struct pair vars[100];
+struct pair *vars[100];
 
 int position = 0;
 
-int insert(char *n_key , char *n_val , int pos)
-{
-    printf("pos is : %d\n" , pos);
-    for(int k = 0; k < pos; k++)
-    {
-        if(!strcmp(n_key , vars[k].key))
-        {
-            vars[k].val = n_val;
-            return 0;
-        }
-    }
-    pair tmp_pair;
-    strcpy(tmp_pair.key,n_key);
-    strcpy(tmp_pair.val,n_val);
-    vars[pos] = tmp_pair;
-    //printf("value : %s inserted into key : %s\n" , vars[position].val , vars[position].key);
-    return 1;
-}
+// int insert(char *n_key , char *n_val , int pos)
+// {
+//     printf("pos is : %d\n" , pos);
+//     for(int k = 0; k < pos; k++)
+//     {
+//         if(!strcmp(n_key , vars[k].key))
+//         {
+//             vars[k].val = n_val;
+//             return 0;
+//         }
+//     }
+//     pair tmp_pair;
+//     strcpy(tmp_pair.key,n_key);
+//     strcpy(tmp_pair.val,n_val);
+//     vars[pos] = tmp_pair;
+//     //printf("value : %s inserted into key : %s\n" , vars[position].val , vars[position].key);
+//     return 1;
+// }
 
 
-char* get(char *n_key , int pos)
-{
-    for(int k = 0; k < pos; k++)
-    {
-        printf("iter : %d , key : %s , val ; %s\n" , k ,vars[k].key,vars[k].val);
-        if(!strcmp(n_key , vars[k].key))
-        {
-            return vars[k].val;
-        }
-    }
-    return "";
-}
+// char* get(char *n_key , int pos)
+// {
+//     for(int k = 0; k < pos; k++)
+//     {
+//         printf("iter : %d , key : %s , val ; %s\n" , k ,vars[k].key,vars[k].val);
+//         if(!strcmp(n_key , vars[k].key))
+//         {
+//             return vars[k].val;
+//         }
+//     }
+//     return "";
+// }
 
 void handler_func(int sigg);
 
@@ -190,9 +190,10 @@ while (1)
         int exist = 0;
         for(int k = 0; k < position; k++)
         {
-            if(!strcmp(argv[0] , vars[k].key))
+            if(!strcmp(argv[0] , vars[k]->key))
             {
-                vars[k].val = argv[2];
+                // vars[k]->val = malloc(strlen(argv[2]) +1);
+                strcpy(vars[k]->val,argv[2]);
                 exist = 1;
                 return 0;
             }
@@ -200,30 +201,39 @@ while (1)
         if(!exist)
         {
             pair *tmp_pair;
+            tmp_pair->key = malloc(strlen(argv[0]) +1);
+            tmp_pair->val = malloc(strlen(argv[2]) +1);
             strcpy(tmp_pair->key,argv[0]);
             strcpy(tmp_pair->val,argv[2]);
-            vars[position] = *tmp_pair; 
+            vars[position] = tmp_pair; 
             position ++;
         }   
         continue;
     }
     if (! strcmp(argv[0], "echo") && argv[1][0]=='$') 
     {
+        int exist = 0;
         char *ans;
         for(int k = 0; k < position; k++)
         {
             //printf("iter : %d , key : %s , val ; %s\n" , k ,vars[k].key,vars[k].val);
-            if(!strcmp(argv[1] , vars[k].key))
+            if(!strcmp(argv[1] , vars[k]->key))
             {
-                ans = vars[k].val;
+                ans = vars[k]->val;
+                exist = 1;
             }
         }
-        //printf("the returned value should be 'pitma' , and is : %s\n" , ans);
-        if(strcmp(ans , ""))
+        if(exist)
         {
             printf("%s\n" , ans);
             continue;
         }
+        //printf("the returned value should be 'pitma' , and is : %s\n" , ans);
+        // if(strcmp(ans , ""))
+        // {
+        //     printf("%s\n" , ans);
+        //     continue;
+        // }
     }
 
     
