@@ -22,6 +22,7 @@ int position = 0;
 
 int insert(char *n_key , char *n_val , int pos)
 {
+    printf("pos is : %d\n" , pos);
     for(int k = 0; k < pos; k++)
     {
         if(!strcmp(n_key , vars[k].key))
@@ -186,15 +187,37 @@ while (1)
     //q10 - checks if the firs word of the command is $...
     if(argv[0][0] == '$')
     {
-        char *key = argv[0];
-        char *val = argv[2];
-        position += insert(key , val , position);
-        //printf("inserting - key :%s , to value : %s\n" , key , val);
+        int exist = 0;
+        for(int k = 0; k < position; k++)
+        {
+            if(!strcmp(argv[0] , vars[k].key))
+            {
+                vars[k].val = argv[2];
+                exist = 1;
+                return 0;
+            }
+        }
+        if(!exist)
+        {
+            pair *tmp_pair;
+            strcpy(tmp_pair->key,argv[0]);
+            strcpy(tmp_pair->val,argv[2]);
+            vars[position] = *tmp_pair; 
+            position ++;
+        }   
         continue;
     }
     if (! strcmp(argv[0], "echo") && argv[1][0]=='$') 
     {
-        char *ans = get(argv[1] , position);
+        char *ans;
+        for(int k = 0; k < position; k++)
+        {
+            //printf("iter : %d , key : %s , val ; %s\n" , k ,vars[k].key,vars[k].val);
+            if(!strcmp(argv[1] , vars[k].key))
+            {
+                ans = vars[k].val;
+            }
+        }
         //printf("the returned value should be 'pitma' , and is : %s\n" , ans);
         if(strcmp(ans , ""))
         {
