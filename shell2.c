@@ -7,7 +7,20 @@
 #include "unistd.h"
 #include <string.h>
 
+#define _SVID_SOURCE 1
+#include <termios.h>
+#include <signal.h>
+
 void handler_func(int sigg);
+
+struct termios termios_save;
+
+void reset_the_terminal(void)
+{
+tcsetattr(0, 0, &termios_save );
+}
+
+sig_atomic_t the_flag = 0;
 
 char *prompt = "hello";
 int sig = 0;
@@ -21,17 +34,30 @@ prompt = "hello";
 int i, fd, amper, redirect, retid, status , redirecterr;
 char *argv[10];
 status = -999;
+
+
+int rc;
+int ch;
+struct termios termios_new;
+
+rc = tcgetattr(0, &termios_save );
+if (rc) {perror("tcgetattr"); exit(1); }
+
+rc = atexit(reset_the_terminal);
+if (rc) {perror("atexit"); exit(1); }
+
+termios_new = termios_save;
+termios_new.c_lflag &= ~ECHOCTL;
+rc = tcsetattr(0, 0, &termios_new );
+if (rc) {perror("tcsetattr"); exit(1); }
+
+
 signal(SIGINT , handler_func);
 
 while (1)
 {
     printf("%s: ",prompt);
     fgets(command, 1024, stdin);
-    if(sig)
-    {
-        sig = 0;
-        continue;
-    }
     if (command[0] == '!' && command[1] == '!')
     {
         strncpy(command , prev_command , 1024);
@@ -49,13 +75,19 @@ while (1)
         i++;
     }
     argv[i] = NULL;
-
     /* Is command empty */
     if (argv[0] == NULL)
         continue;
 
+    //q7 - checks if the first word of the command is quit
+    if (! strcmp(argv[0], "quit")) 
+    {
+        return 0;
+    }
+
     /* Does command line end with & */ 
-    if (! strcmp(argv[i - 1], "&")) {
+    if (! strcmp(argv[i - 1], "&")) 
+    {
         amper = 1;
         argv[i - 1] = NULL;
     }
@@ -109,17 +141,7 @@ while (1)
         continue;
     }
 
-    //q7 - checks if the first word of the command is quit
-    if (! strcmp(argv[0], "quit")) 
-    {
-        return 0;
-    }
-
-    //q8 - checks if the first word of the command is quit
-    if (! strcmp(argv[0], "^C")) 
-    {
-        continue;
-    }
+    
 
     
         
@@ -154,8 +176,9 @@ while (1)
 }
 void handler_func(int sigg)
 {
-    //printf("%s\n" , prompt);
-    //signal(SIGINT , handler_func);
-    printf("\nyou typed Control-C!\n%s: " , prompt);
     sig = 1;
+    signal(SIGINT , handler_func);
+    printf("\nyou typed Control-C!\n");
+    printf("%s :" , prompt);
+    fflush(stdout);
 }
