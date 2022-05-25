@@ -20,28 +20,30 @@ struct pair vars[100];
 
 int position = 0;
 
-void insert(char *n_key , char *n_val)
+int insert(char *n_key , char *n_val , int pos)
 {
-    for(int k = 0; k < position; k++)
+    for(int k = 0; k < pos; k++)
     {
         if(!strcmp(n_key , vars[k].key))
         {
             vars[k].val = n_val;
-            return;
+            return 0;
         }
     }
     pair tmp_pair;
-    tmp_pair.key = n_key;
-    tmp_pair.val = n_val;
-    vars[position] = tmp_pair;
-    position++; 
+    strcpy(tmp_pair.key,n_key);
+    strcpy(tmp_pair.val,n_val);
+    vars[pos] = tmp_pair;
+    //printf("value : %s inserted into key : %s\n" , vars[position].val , vars[position].key);
+    return 1;
 }
 
 
-char* get(char *n_key)
+char* get(char *n_key , int pos)
 {
-    for(int k = 0; k < position; k++)
+    for(int k = 0; k < pos; k++)
     {
+        printf("iter : %d , key : %s , val ; %s\n" , k ,vars[k].key,vars[k].val);
         if(!strcmp(n_key , vars[k].key))
         {
             return vars[k].val;
@@ -70,9 +72,10 @@ char prev_command[1024];
 char *token;
 char *outfile;
 prompt = "hello";
-int i, fd, amper, redirect, retid, status , redirecterr;
+int i, fd, amper, redirect, retid, status , redirecterr , position;
 char *argv[10];
 status = -999;
+position = 0;
 
 
 int rc;
@@ -183,14 +186,16 @@ while (1)
     //q10 - checks if the firs word of the command is $...
     if(argv[0][0] == '$')
     {
-        char* key = argv[0];
+        char *key = argv[0];
         char *val = argv[2];
-        insert(key , val);
+        position += insert(key , val , position);
+        //printf("inserting - key :%s , to value : %s\n" , key , val);
         continue;
     }
     if (! strcmp(argv[0], "echo") && argv[1][0]=='$') 
     {
-        char *ans = get(argv[1]);
+        char *ans = get(argv[1] , position);
+        //printf("the returned value should be 'pitma' , and is : %s\n" , ans);
         if(strcmp(ans , ""))
         {
             printf("%s\n" , ans);
