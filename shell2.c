@@ -16,7 +16,7 @@ typedef struct pair{
     char *val;
 }pair;
 
-struct pair *vars[100];
+struct pair vars[100];
 
 int position = 0;
 
@@ -143,7 +143,6 @@ while (1)
         redirect = 1;
         argv[i - 2] = NULL;
         outfile = argv[i - 1];
-        printf("out file is : %s\n" , outfile);
     }
     else {redirect = 0; }
 
@@ -190,23 +189,27 @@ while (1)
         int exist = 0;
         for(int k = 0; k < position; k++)
         {
-            if(!strcmp(argv[0] , vars[k]->key))
+            if(!strcmp(argv[0] , vars[k].key))
             {
                 // vars[k]->val = malloc(strlen(argv[2]) +1);
-                strcpy(vars[k]->val,argv[2]);
+                strcpy(vars[k].val,argv[2]);
                 exist = 1;
-                return 0;
+                continue;
             }
         }
         if(!exist)
         {
             pair *tmp_pair;
-            tmp_pair->key = malloc(strlen(argv[0]) +1);
-            tmp_pair->val = malloc(strlen(argv[2]) +1);
-            strcpy(tmp_pair->key,argv[0]);
-            strcpy(tmp_pair->val,argv[2]);
-            vars[position] = tmp_pair; 
+            vars[position].key = malloc(strlen(argv[0]) +1);
+            vars[position].val = malloc(strlen(argv[2]) +1);
+            strcpy(vars[position].key,argv[0]);
+            strcpy(vars[position].val,argv[2]);
+            printf("vars : ");
             position ++;
+            for(int k = 0; k <position;k++)
+            {
+                printf("pos : %d , key : %s , val :%s\n" , k , vars[k].key , vars[k].val);
+            }
         }   
         continue;
     }
@@ -217,9 +220,10 @@ while (1)
         for(int k = 0; k < position; k++)
         {
             //printf("iter : %d , key : %s , val ; %s\n" , k ,vars[k].key,vars[k].val);
-            if(!strcmp(argv[1] , vars[k]->key))
+            if(!strcmp(argv[1] , vars[k].key))
             {
-                ans = vars[k]->val;
+                ans = malloc(strlen(vars[k].val)+1);
+                strcpy(ans,vars[k].val);
                 exist = 1;
             }
         }
@@ -257,8 +261,8 @@ while (1)
         else if (redirecterr) 
         {
             fd = creat(outfile, 0660); 
-            close (STDOUT_FILENO) ; 
-            dup(fd); 
+            close (STDERR_FILENO) ; 
+            dup2(fd , STDERR_FILENO); 
             close(fd); 
             /* stdout is now redirected */
         } 

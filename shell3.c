@@ -56,35 +56,41 @@ while (1)
     }
 
     /* Does command line end with & */ 
-    if (! strcmp(argv1[argc1 - 1], "&")) {
+    if (! strcmp(argv1[argc1 - 1], "&")) 
+    {
         amper = 1;
         argv1[argc1 - 1] = NULL;
-        }
+    }
     else 
         amper = 0; 
 
-    if (argc1 > 1 && ! strcmp(argv1[argc1 - 2], ">")) {
+    if (argc1 > 1 && ! strcmp(argv1[argc1 - 2], ">")) 
+    {
         redirect = 1;
         argv1[argc1 - 2] = NULL;
         outfile = argv1[argc1 - 1];
-        }
+    }
     else 
         redirect = 0; 
 
     /* for commands not part of the shell command language */ 
 
-    if (fork() == 0) { 
+    if (fork() == 0) 
+    { 
         /* redirection of IO ? */
-        if (redirect) {
+        if (redirect) 
+        {
             fd = creat(outfile, 0660); 
             close (STDOUT_FILENO) ; 
             dup(fd); 
             close(fd); 
             /* stdout is now redirected */
         } 
-        if (piping) {
+        if (piping) 
+        {
             pipe (fildes);
-            if (fork() == 0) { 
+            if (fork() == 0) 
+            { 
                 /* first component of command line */ 
                 close(STDOUT_FILENO); 
                 dup(fildes[1]); 
