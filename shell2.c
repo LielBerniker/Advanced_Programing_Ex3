@@ -125,6 +125,11 @@ while (1)
     //q7 - checks if the first word of the command is quit
     if (! strcmp(argv[0], "quit")) 
     {
+        for(int k = 0;k<position;k++)
+        {
+            free(vars[k].key);
+            free(vars[k].val);
+        }
         return 0;
     }
 
@@ -206,10 +211,10 @@ while (1)
             strcpy(vars[position].val,argv[2]);
             printf("vars : ");
             position ++;
-            for(int k = 0; k <position;k++)
-            {
-                printf("pos : %d , key : %s , val :%s\n" , k , vars[k].key , vars[k].val);
-            }
+            // for(int k = 0; k <position;k++)
+            // {
+            //     printf("pos : %d , key : %s , val :%s\n" , k , vars[k].key , vars[k].val);
+            // }
         }   
         continue;
     }
