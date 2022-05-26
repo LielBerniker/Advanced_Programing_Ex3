@@ -54,12 +54,13 @@ int position = 0;
 // }
 
 void handler_func(int sigg);
+int pipe_handler(char *cmd , char *prev_cmd);
 
 struct termios termios_save;
 
 void reset_the_terminal(void)
 {
-tcsetattr(0, 0, &termios_save );
+    tcsetattr(0, 0, &termios_save );
 }
 
 sig_atomic_t the_flag = 0;
@@ -73,7 +74,7 @@ char prev_command[1024];
 char *token;
 char *outfile;
 prompt = "hello";
-int i, fd, amper, redirect, retid, status , redirecterr , position;
+int i, fd, amper, redirect, retid, status , redirecterr , position , piping;
 char *argv[10];
 status = -999;
 position = 0;
@@ -107,7 +108,15 @@ while (1)
     }
     strncpy(prev_command , command , 1024);
     command[strlen(command) - 1] = '\0';
-
+    for (int k = 0; k < strlen(command);k++)
+    {
+        if (command[k] == '|')
+        {
+            int quit = pipe_handler(command , prev_command);
+            if(quit){return 0;}
+            continue;
+        } 
+    }
     /* parse command line */
     i = 0;
     token = strtok (command," ");
@@ -209,7 +218,6 @@ while (1)
             vars[position].val = malloc(strlen(argv[2]) +1);
             strcpy(vars[position].key,argv[0]);
             strcpy(vars[position].val,argv[2]);
-            printf("vars : ");
             position ++;
             // for(int k = 0; k <position;k++)
             // {
@@ -243,6 +251,40 @@ while (1)
         //     printf("%s\n" , ans);
         //     continue;
         // }
+    }
+
+    //q11 - checks if the firs word of the command is read...
+    if(! strcmp(argv[0], "read")) 
+    {
+        int exist = 0;
+        char * key_temp = "$";
+        char val_temp[1024];
+        strcat(key_temp,argv[1]);
+        fgets(val_temp, 1024, stdin);
+        for(int k = 0; k < position; k++)
+        {
+            if(!strcmp(key_temp , vars[k].key))
+            {
+                strcpy(vars[k].val,val_temp);
+                exist = 1;
+                continue;
+            }
+        }
+        if(!exist)
+        {
+            pair *tmp_pair;
+            vars[position].key = malloc(strlen(argv[0]) +1);
+            vars[position].val = malloc(strlen(argv[2]) +1);
+            strcpy(vars[position].key,key_temp);
+            strcpy(vars[position].val,val_temp);
+            printf("vars : ");
+            position ++;
+            // for(int k = 0; k <position;k++)
+            // {
+            //     printf("pos : %d , key : %s , val :%s\n" , k , vars[k].key , vars[k].val);
+            // }
+        }   
+        continue;
     }
 
     
@@ -285,4 +327,39 @@ void handler_func(int sigg)
     printf("\nyou typed Control-C!\n");
     printf("%s :" , prompt);
     fflush(stdout);
+}
+int pipe_handler(char *command , char *prev_command)
+{
+
+    int pipes;
+    for (int k = 0; k < strlen(command);k++)
+    {
+        if (command[k] == '|')
+        {
+            pipes++;
+        } 
+    }
+    char **argv[pipes];
+    char *token;
+    int i = 0;
+    int k = 0;
+    int amper , redirect , redirecterr;
+    char *outfile;
+    token = strtok (command," ");
+    while (token != NULL)
+    {
+        argv[i][k] = token;
+        token = strtok (NULL, " ");
+        k++;
+        if(!strcmp(token, "|"))
+        {
+            argv[i][k] = NULL;
+            k=0;
+            i++;
+        }
+    }
+    char *output;
+    char *cmd;
+    int words_in_command;
+
 }
