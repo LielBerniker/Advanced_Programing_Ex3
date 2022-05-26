@@ -108,15 +108,15 @@ while (1)
     }
     strncpy(prev_command , command , 1024);
     command[strlen(command) - 1] = '\0';
-    for (int k = 0; k < strlen(command);k++)
-    {
-        if (command[k] == '|')
-        {
-            int quit = pipe_handler(command , prev_command);
-            if(quit){return 0;}
-            continue;
-        } 
-    }
+    // for (int k = 0; k < strlen(command);k++)
+    // {
+    //     if (command[k] == '|')
+    //     {
+    //         int quit = pipe_handler(command , prev_command);
+    //         if(quit){return 0;}
+    //         continue;
+    //     } 
+    // }
     /* parse command line */
     i = 0;
     token = strtok (command," ");
@@ -242,7 +242,7 @@ while (1)
         }
         if(exist)
         {
-            printf("%s\n" , ans);
+            printf("%s" , ans);
             continue;
         }
         //printf("the returned value should be 'pitma' , and is : %s\n" , ans);
@@ -256,8 +256,9 @@ while (1)
     //q11 - checks if the firs word of the command is read...
     if(! strcmp(argv[0], "read")) 
     {
+        // printf("\n");
         int exist = 0;
-        char * key_temp = "$";
+        char key_temp[] = "$";
         char val_temp[1024];
         strcat(key_temp,argv[1]);
         fgets(val_temp, 1024, stdin);
@@ -272,12 +273,10 @@ while (1)
         }
         if(!exist)
         {
-            pair *tmp_pair;
-            vars[position].key = malloc(strlen(argv[0]) +1);
-            vars[position].val = malloc(strlen(argv[2]) +1);
+            vars[position].key = malloc(strlen(key_temp) +1);
+            vars[position].val = malloc(strlen(val_temp) +1);
             strcpy(vars[position].key,key_temp);
             strcpy(vars[position].val,val_temp);
-            printf("vars : ");
             position ++;
             // for(int k = 0; k <position;k++)
             // {
@@ -328,38 +327,38 @@ void handler_func(int sigg)
     printf("%s :" , prompt);
     fflush(stdout);
 }
-int pipe_handler(char *command , char *prev_command)
-{
+// int pipe_handler(char *command , char *prev_command)
+// {
 
-    int pipes;
-    for (int k = 0; k < strlen(command);k++)
-    {
-        if (command[k] == '|')
-        {
-            pipes++;
-        } 
-    }
-    char **argv[pipes];
-    char *token;
-    int i = 0;
-    int k = 0;
-    int amper , redirect , redirecterr;
-    char *outfile;
-    token = strtok (command," ");
-    while (token != NULL)
-    {
-        argv[i][k] = token;
-        token = strtok (NULL, " ");
-        k++;
-        if(!strcmp(token, "|"))
-        {
-            argv[i][k] = NULL;
-            k=0;
-            i++;
-        }
-    }
-    char *output;
-    char *cmd;
-    int words_in_command;
+//     int pipes;
+//     for (int k = 0; k < strlen(command);k++)
+//     {
+//         if (command[k] == '|')
+//         {
+//             pipes++;
+//         } 
+//     }
+//     char **argv[pipes];
+//     char *token;
+//     int i = 0;
+//     int k = 0;
+//     int amper , redirect , redirecterr;
+//     char *outfile;
+//     token = strtok (command," ");
+//     while (token != NULL)
+//     {
+//         argv[i][k] = token;
+//         token = strtok (NULL, " ");
+//         k++;
+//         if(!strcmp(token, "|"))
+//         {
+//             argv[i][k] = NULL;
+//             k=0;
+//             i++;
+//         }
+//     }
+//     char *output;
+//     char *cmd;
+//     int words_in_command;
 
-}
+// }
