@@ -70,6 +70,7 @@ int sig = 0;
 
 int main() 
 {
+    char string[1024];
     char command[1024];
     char prev_command[1024];
     char *token;
@@ -78,7 +79,7 @@ int main()
     int i, fd, amper, redirect, retid, status , redirecterr , position , piping;
     char *argv[10];
     char *argv_s[10];
-    char *output;
+    char *prev_output;
     int curr_argv , pipes;
     status = -999;
     position = 0;
@@ -108,7 +109,8 @@ int main()
     {
         if(piping)
         {
-
+            strcpy(command , argv_s[curr_argv]);
+            strcat(command , string);
         }
         else
         {
@@ -119,38 +121,39 @@ int main()
             {
                 strncpy(command , prev_command , 1024);
             }
+            command[strlen(command) - 1] = '\0';
             //checks if there is | in command , and counts the pipes
             for (int k = 0; k < strlen(command);k++)
             {
                 if (command[k] == '|')
                 {
                     pipes++;
-                    piping = 1;
+                    if(!piping){piping = 1;}
                 } 
             }
             //if there is | in the new command - get into piping stage ,  and initalize the variables.
             if (piping)
             {
                 int last = 0;
-                for(int k = 0;strlen(command);k++)
+                for(int k = 0;k<strlen(command);k++)
                 {
                     if(command[k] == '|')
                     {
+                        // printf("im here1\n");
                         argv_s[curr_argv] = malloc(k-last);
                         strncpy(argv_s[curr_argv] , (command+last) , k-last);
                         last = k+1;
                         curr_argv++;
                     }
                 }
-                for(int k = 0;k<pipes;k++)
-                {
-                    printf("%s\n" , argv_s[k]);
-                }
-                break;
+                argv_s[curr_argv] = malloc(strlen(command)-last);
+                strncpy(argv_s[curr_argv] , (command+last) , strlen(command)-last);
+                curr_argv = 0;
+                strcpy(command , argv_s[curr_argv]);
             }
-        } 
+        }
         strncpy(prev_command , command , 1024);
-        command[strlen(command) - 1] = '\0';
+        // command[strlen(command) - 1] = '\0';
         /* parse command line */
         i = 0;
         token = strtok (command," ");
@@ -279,12 +282,6 @@ int main()
                 printf("%s" , ans);
                 continue;
             }
-            //printf("the returned value should be 'pitma' , and is : %s\n" , ans);
-            // if(strcmp(ans , ""))
-            // {
-            //     printf("%s\n" , ans);
-            //     continue;
-            // }
         }
 
         //q11 - checks if the firs word of the command is read...
@@ -320,38 +317,77 @@ int main()
             continue;
         }
 
-        
-
-        
-            
-
         /* for commands not part of the shell command language */ 
 
-        if (fork() == 0) 
-        { 
-            /* redirection of IO ? */
-            if (redirect) 
-            {
-                fd = creat(outfile, 0660); 
-                close (STDOUT_FILENO) ; 
-                dup(fd); 
-                close(fd); 
-                /* stdout is now redirected */
-            }
-            else if (redirecterr) 
-            {
-                fd = creat(outfile, 0660); 
-                close (STDERR_FILENO) ; 
-                dup2(fd , STDERR_FILENO); 
-                close(fd); 
-                /* stdout is now redirected */
-            } 
-            execvp(argv[0], argv);
-        }
-        /* parent continues here */
-        if (amper == 0)
+        if(piping)
         {
-            retid = wait(&status);
+            if (fork() == 0) 
+            { 
+                /* redirection of IO ? */
+                if (redirect) 
+                {
+                    fd = creat(outfile, 0660); 
+                    close (STDOUT_FILENO) ; 
+                    dup(fd); 
+                    close(fd); 
+                    /* stdout is now redirected */
+                }
+                else if (redirecterr) 
+                {
+                    fd = creat(outfile, 0660); 
+                    close (STDERR_FILENO) ; 
+                    dup2(fd , STDERR_FILENO); 
+                    close(fd);
+                }
+                //need to redirect output to the prev_command string
+                execvp(argv[0], argv);
+                curr_argv++;
+                if(curr_argv == pipes)
+                {
+                    for(int k = 0;k<=pipes;k++)
+                    {
+                        free(argv_s[k]);
+                        curr_argv = 0;
+                    }
+                    piping = 0;
+                    pipes = 0;
+                }
+            }
+            /* parent continues here */
+            if (amper == 0)
+            {
+                retid = wait(&status);
+            }
+            continue;
+        }
+        else
+        {
+            if (fork() == 0) 
+            { 
+                /* redirection of IO ? */
+                if (redirect) 
+                {
+                    fd = creat(outfile, 0660); 
+                    close (STDOUT_FILENO) ; 
+                    dup(fd); 
+                    close(fd); 
+                    /* stdout is now redirected */
+                }
+                else if (redirecterr) 
+                {
+                    fd = creat(outfile, 0660); 
+                    close (STDERR_FILENO) ; 
+                    dup2(fd , STDERR_FILENO); 
+                    close(fd); 
+                    /* stdout is now redirected */
+                } 
+                execvp(argv[0], argv);
+            }
+            /* parent continues here */
+            if (amper == 0)
+            {
+                retid = wait(&status);
+            }
         }
     }
 }
