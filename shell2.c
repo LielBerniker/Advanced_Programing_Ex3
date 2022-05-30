@@ -68,256 +68,292 @@ sig_atomic_t the_flag = 0;
 char *prompt = "hello";
 int sig = 0;
 
-int main() {
-char command[1024];
-char prev_command[1024];
-char *token;
-char *outfile;
-prompt = "hello";
-int i, fd, amper, redirect, retid, status , redirecterr , position , piping;
-char *argv[10];
-status = -999;
-position = 0;
-
-
-int rc;
-int ch;
-struct termios termios_new;
-
-rc = tcgetattr(0, &termios_save );
-if (rc) {perror("tcgetattr"); exit(1); }
-
-rc = atexit(reset_the_terminal);
-if (rc) {perror("atexit"); exit(1); }
-
-termios_new = termios_save;
-termios_new.c_lflag &= ~ECHOCTL;
-rc = tcsetattr(0, 0, &termios_new );
-if (rc) {perror("tcsetattr"); exit(1); }
-
-
-signal(SIGINT , handler_func);
-
-while (1)
+int main() 
 {
-    printf("%s: ",prompt);
-    fgets(command, 1024, stdin);
-    if (command[0] == '!' && command[1] == '!')
-    {
-        strncpy(command , prev_command , 1024);
-    }
-    strncpy(prev_command , command , 1024);
-    command[strlen(command) - 1] = '\0';
-    // for (int k = 0; k < strlen(command);k++)
-    // {
-    //     if (command[k] == '|')
-    //     {
-    //         int quit = pipe_handler(command , prev_command);
-    //         if(quit){return 0;}
-    //         continue;
-    //     } 
-    // }
-    /* parse command line */
-    i = 0;
-    token = strtok (command," ");
-    while (token != NULL)
-    {
-        argv[i] = token;
-        token = strtok (NULL, " ");
-        i++;
-    }
-    argv[i] = NULL;
-    /* Is command empty */
-    if (argv[0] == NULL)
-        continue;
+    char command[1024];
+    char prev_command[1024];
+    char *token;
+    char *outfile;
+    prompt = "hello";
+    int i, fd, amper, redirect, retid, status , redirecterr , position , piping;
+    char *argv[10];
+    char *argv_s[10];
+    char *output;
+    int curr_argv , pipes;
+    status = -999;
+    position = 0;
 
-    //q7 - checks if the first word of the command is quit
-    if (! strcmp(argv[0], "quit")) 
+
+    int rc;
+    int ch;
+    struct termios termios_new;
+
+    rc = tcgetattr(0, &termios_save );
+    if (rc) {perror("tcgetattr"); exit(1); }
+
+    rc = atexit(reset_the_terminal);
+    if (rc) {perror("atexit"); exit(1); }
+
+    termios_new = termios_save;
+    termios_new.c_lflag &= ~ECHOCTL;
+    rc = tcsetattr(0, 0, &termios_new );
+    if (rc) {perror("tcsetattr"); exit(1); }
+
+
+    signal(SIGINT , handler_func);
+    piping = 0;
+    pipes = 0;
+    curr_argv = 0;
+    while (1)
     {
-        for(int k = 0;k<position;k++)
+        if(piping)
         {
-            free(vars[k].key);
-            free(vars[k].val);
+
         }
-        return 0;
-    }
-
-    /* Does command line end with & */ 
-    if (! strcmp(argv[i - 1], "&")) 
-    {
-        amper = 1;
-        argv[i - 1] = NULL;
-    }
-    else 
-        amper = 0; 
-
-    //checks if there is redirect in this command
-    if (! strcmp(argv[i - 2], ">")) 
-    {
-        redirect = 1;
-        argv[i - 2] = NULL;
-        outfile = argv[i - 1];
-    }
-    else {redirect = 0; }
-
-    //q1 - checks if there is redirect to stderr in this command
-    if (! strcmp(argv[i - 2], "2>")) 
-    {
-        redirecterr = 1;
-        argv[i - 2] = NULL;
-        outfile = argv[i - 1];
-    }
-    else {redirecterr = 0; }
-
-    //q2 - checks if the first word of the command is prompt = ...
-    if (! strcmp(argv[0], "prompt") && ! strcmp(argv[1], "=")) 
-    {
-        prompt = argv[2];
-        continue;
-    }
-
-    //q3 is already works with the basic implementation
-
-    //q4 - checks if the first word of the command is echo $?
-    if (! strcmp(argv[0], "echo") && ! strcmp(argv[1], "$?")) 
-    {
-        if(status == -999)
+        else
         {
-            printf("this is the first command!");
+            //get command from user 
+            printf("%s: ",prompt);
+            fgets(command, 1024, stdin);
+            if (command[0] == '!' && command[1] == '!')
+            {
+                strncpy(command , prev_command , 1024);
+            }
+            //checks if there is | in command , and counts the pipes
+            for (int k = 0; k < strlen(command);k++)
+            {
+                if (command[k] == '|')
+                {
+                    pipes++;
+                    piping = 1;
+                } 
+            }
+            //if there is | in the new command - get into piping stage ,  and initalize the variables.
+            if (piping)
+            {
+                int last = 0;
+                for(int k = 0;strlen(command);k++)
+                {
+                    if(command[k] == '|')
+                    {
+                        argv_s[curr_argv] = malloc(k-last);
+                        strncpy(argv_s[curr_argv] , (command+last) , k-last);
+                        last = k+1;
+                        curr_argv++;
+                    }
+                }
+                for(int k = 0;k<pipes;k++)
+                {
+                    printf("%s\n" , argv_s[k]);
+                }
+                break;
+            }
+        } 
+        strncpy(prev_command , command , 1024);
+        command[strlen(command) - 1] = '\0';
+        /* parse command line */
+        i = 0;
+        token = strtok (command," ");
+        while (token != NULL)
+        {
+            argv[i] = token;
+            token = strtok (NULL, " ");
+            i++;
+        }
+        argv[i] = NULL;
+        /* Is command empty */
+        if (argv[0] == NULL)
+            continue;
+
+        //q7 - checks if the first word of the command is quit
+        if (! strcmp(argv[0], "quit")) 
+        {
+            for(int k = 0;k<position;k++)
+            {
+                free(vars[k].key);
+                free(vars[k].val);
+            }
+            return 0;
+        }
+
+        /* Does command line end with & */ 
+        if (! strcmp(argv[i - 1], "&")) 
+        {
+            amper = 1;
+            argv[i - 1] = NULL;
+        }
+        else 
+            amper = 0; 
+
+        //checks if there is redirect in this command
+        if (! strcmp(argv[i - 2], ">")) 
+        {
+            redirect = 1;
+            argv[i - 2] = NULL;
+            outfile = argv[i - 1];
+        }
+        else {redirect = 0; }
+
+        //q1 - checks if there is redirect to stderr in this command
+        if (! strcmp(argv[i - 2], "2>")) 
+        {
+            redirecterr = 1;
+            argv[i - 2] = NULL;
+            outfile = argv[i - 1];
+        }
+        else {redirecterr = 0; }
+
+        //q2 - checks if the first word of the command is prompt = ...
+        if (! strcmp(argv[0], "prompt") && ! strcmp(argv[1], "=")) 
+        {
+            prompt = argv[2];
             continue;
         }
-        printf("%d\n" , status);
-        continue;
-    }
 
-    //q5 - checks if the first word of the command is chdir
-    if (! strcmp(argv[0], "cd")) 
-    {
-        chdir(argv[1]);
-        continue;
-    }
+        //q3 is already works with the basic implementation
 
-    //q10 - checks if the firs word of the command is $...
-    if(argv[0][0] == '$')
-    {
-        int exist = 0;
-        for(int k = 0; k < position; k++)
+        //q4 - checks if the first word of the command is echo $?
+        if (! strcmp(argv[0], "echo") && ! strcmp(argv[1], "$?")) 
         {
-            if(!strcmp(argv[0] , vars[k].key))
+            if(status == -999)
             {
-                // vars[k]->val = malloc(strlen(argv[2]) +1);
-                strcpy(vars[k].val,argv[2]);
-                exist = 1;
+                printf("this is the first command!");
                 continue;
             }
-        }
-        if(!exist)
-        {
-            pair *tmp_pair;
-            vars[position].key = malloc(strlen(argv[0]) +1);
-            vars[position].val = malloc(strlen(argv[2]) +1);
-            strcpy(vars[position].key,argv[0]);
-            strcpy(vars[position].val,argv[2]);
-            position ++;
-            // for(int k = 0; k <position;k++)
-            // {
-            //     printf("pos : %d , key : %s , val :%s\n" , k , vars[k].key , vars[k].val);
-            // }
-        }   
-        continue;
-    }
-    if (! strcmp(argv[0], "echo") && argv[1][0]=='$') 
-    {
-        int exist = 0;
-        char *ans;
-        for(int k = 0; k < position; k++)
-        {
-            //printf("iter : %d , key : %s , val ; %s\n" , k ,vars[k].key,vars[k].val);
-            if(!strcmp(argv[1] , vars[k].key))
-            {
-                ans = malloc(strlen(vars[k].val)+1);
-                strcpy(ans,vars[k].val);
-                exist = 1;
-            }
-        }
-        if(exist)
-        {
-            printf("%s" , ans);
+            printf("%d\n" , status);
             continue;
         }
-        //printf("the returned value should be 'pitma' , and is : %s\n" , ans);
-        // if(strcmp(ans , ""))
-        // {
-        //     printf("%s\n" , ans);
-        //     continue;
-        // }
-    }
 
-    //q11 - checks if the firs word of the command is read...
-    if(! strcmp(argv[0], "read")) 
-    {
-        // printf("\n");
-        int exist = 0;
-        char key_temp[] = "$";
-        char val_temp[1024];
-        strcat(key_temp,argv[1]);
-        fgets(val_temp, 1024, stdin);
-        for(int k = 0; k < position; k++)
+        //q5 - checks if the first word of the command is chdir
+        if (! strcmp(argv[0], "cd")) 
         {
-            if(!strcmp(key_temp , vars[k].key))
+            chdir(argv[1]);
+            continue;
+        }
+
+        //q10 - checks if the firs word of the command is $...
+        if(argv[0][0] == '$')
+        {
+            int exist = 0;
+            for(int k = 0; k < position; k++)
             {
-                strcpy(vars[k].val,val_temp);
-                exist = 1;
+                if(!strcmp(argv[0] , vars[k].key))
+                {
+                    // vars[k]->val = malloc(strlen(argv[2]) +1);
+                    strcpy(vars[k].val,argv[2]);
+                    exist = 1;
+                    continue;
+                }
+            }
+            if(!exist)
+            {
+                pair *tmp_pair;
+                vars[position].key = malloc(strlen(argv[0]) +1);
+                vars[position].val = malloc(strlen(argv[2]) +1);
+                strcpy(vars[position].key,argv[0]);
+                strcpy(vars[position].val,argv[2]);
+                position ++;
+                // for(int k = 0; k <position;k++)
+                // {
+                //     printf("pos : %d , key : %s , val :%s\n" , k , vars[k].key , vars[k].val);
+                // }
+            }   
+            continue;
+        }
+        if (! strcmp(argv[0], "echo") && argv[1][0]=='$') 
+        {
+            int exist = 0;
+            char *ans;
+            for(int k = 0; k < position; k++)
+            {
+                //printf("iter : %d , key : %s , val ; %s\n" , k ,vars[k].key,vars[k].val);
+                if(!strcmp(argv[1] , vars[k].key))
+                {
+                    ans = malloc(strlen(vars[k].val)+1);
+                    strcpy(ans,vars[k].val);
+                    exist = 1;
+                }
+            }
+            if(exist)
+            {
+                printf("%s" , ans);
                 continue;
             }
-        }
-        if(!exist)
-        {
-            vars[position].key = malloc(strlen(key_temp) +1);
-            vars[position].val = malloc(strlen(val_temp) +1);
-            strcpy(vars[position].key,key_temp);
-            strcpy(vars[position].val,val_temp);
-            position ++;
-            // for(int k = 0; k <position;k++)
+            //printf("the returned value should be 'pitma' , and is : %s\n" , ans);
+            // if(strcmp(ans , ""))
             // {
-            //     printf("pos : %d , key : %s , val :%s\n" , k , vars[k].key , vars[k].val);
+            //     printf("%s\n" , ans);
+            //     continue;
             // }
-        }   
-        continue;
-    }
+        }
 
-    
+        //q11 - checks if the firs word of the command is read...
+        if(! strcmp(argv[0], "read")) 
+        {
+            // printf("\n");
+            int exist = 0;
+            char key_temp[] = "$";
+            char val_temp[1024];
+            strcat(key_temp,argv[1]);
+            fgets(val_temp, 1024, stdin);
+            for(int k = 0; k < position; k++)
+            {
+                if(!strcmp(key_temp , vars[k].key))
+                {
+                    strcpy(vars[k].val,val_temp);
+                    exist = 1;
+                    continue;
+                }
+            }
+            if(!exist)
+            {
+                vars[position].key = malloc(strlen(key_temp) +1);
+                vars[position].val = malloc(strlen(val_temp) +1);
+                strcpy(vars[position].key,key_temp);
+                strcpy(vars[position].val,val_temp);
+                position ++;
+                // for(int k = 0; k <position;k++)
+                // {
+                //     printf("pos : %d , key : %s , val :%s\n" , k , vars[k].key , vars[k].val);
+                // }
+            }   
+            continue;
+        }
 
-    
         
 
-    /* for commands not part of the shell command language */ 
+        
+            
 
-    if (fork() == 0) 
-    { 
-        /* redirection of IO ? */
-        if (redirect) 
-        {
-            fd = creat(outfile, 0660); 
-            close (STDOUT_FILENO) ; 
-            dup(fd); 
-            close(fd); 
-            /* stdout is now redirected */
+        /* for commands not part of the shell command language */ 
+
+        if (fork() == 0) 
+        { 
+            /* redirection of IO ? */
+            if (redirect) 
+            {
+                fd = creat(outfile, 0660); 
+                close (STDOUT_FILENO) ; 
+                dup(fd); 
+                close(fd); 
+                /* stdout is now redirected */
+            }
+            else if (redirecterr) 
+            {
+                fd = creat(outfile, 0660); 
+                close (STDERR_FILENO) ; 
+                dup2(fd , STDERR_FILENO); 
+                close(fd); 
+                /* stdout is now redirected */
+            } 
+            execvp(argv[0], argv);
         }
-        else if (redirecterr) 
+        /* parent continues here */
+        if (amper == 0)
         {
-            fd = creat(outfile, 0660); 
-            close (STDERR_FILENO) ; 
-            dup2(fd , STDERR_FILENO); 
-            close(fd); 
-            /* stdout is now redirected */
-        } 
-        execvp(argv[0], argv);
+            retid = wait(&status);
+        }
     }
-    /* parent continues here */
-    if (amper == 0)
-        retid = wait(&status);
-}
 }
 void handler_func(int sigg)
 {
