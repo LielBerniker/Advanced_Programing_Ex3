@@ -47,6 +47,7 @@ int main()
     char *argv[10];
     char *argv_s[10];
     char *prev_output;
+    prev_output= (char*) malloc(4096);
     int curr_argv , pipes;
     status = -999;
     position = 0;
@@ -77,6 +78,7 @@ int main()
     {
         if(piping)
         {
+            printf("im here\n");
             strcpy(command , argv_s[curr_argv]);
             strcat(command , string);
         }
@@ -161,6 +163,13 @@ int main()
                 free(vars[k].key);
                 free(vars[k].val);
             }
+            if(piping)
+            {
+                for (size_t j = 0; j<=pipes; j++)
+                {
+                    free(argv_s[j]);
+                }
+            }
             return 0;
         }
 
@@ -174,6 +183,8 @@ int main()
             amper = 0; 
 
         //checks if there is redirect in this command
+        if(i>=2)
+        {
         if (! strcmp(argv[i - 2], ">")) 
         {
             redirect = 1;
@@ -193,7 +204,7 @@ int main()
             redirecterr = 0; 
             redirect = 0;
         }
-
+        }
         //q2 - checks if the first word of the command is prompt = ...
         if (! strcmp(argv[0], "prompt") && ! strcmp(argv[1], "=")) 
         {
@@ -307,7 +318,7 @@ int main()
         // {
         //     printf("%d : %s=\n" ,k , argv[k]);
         // }
-        if(piping)
+        if(piping && curr_argv <= pipes)
         {
             if (fork() == 0) 
             { 
@@ -363,25 +374,18 @@ int main()
 
             /* copy the file into the buffer */
             if( 1!=fread( buffer , lSize, 1 , fp) )
-            fclose(fp),free(buffer),fputs("entire read fails",stderr),exit(1);
+            fclose(fp),fputs("entire read fails",stderr),exit(1);
 
             /* do your work here, buffer is a string contains the whole text */
             //size = (int *)lSize;
             fclose(fp);
+
             strcpy(prev_output,buffer);
+            printf("prev output is : \n%s\n" , prev_output);
+            free(buffer);
 
 
             curr_argv++;
-            if(curr_argv == pipes)
-            {
-                for(int k = 0;k<=pipes;k++)
-                {
-                    free(argv_s[k]);
-                    curr_argv = 0;
-                }
-                piping = 0;
-                pipes = 0;
-            }
             //continue;
         }
         else
@@ -413,6 +417,16 @@ int main()
             {
                 retid = wait(&status);
             }
+            if(curr_argv > pipes)
+            {
+                for(int k = 0;k<=pipes;k++)
+                {
+                    free(argv_s[k]);
+                }
+                curr_argv = 0;
+                piping = 0;
+                pipes = 0;
+            }
         }
         tmp++;
         if(tmp==5)
@@ -429,38 +443,3 @@ void handler_func(int sigg)
     printf("%s :" , prompt);
     fflush(stdout);
 }
-// int pipe_handler(char *command , char *prev_command)
-// {
-
-//     int pipes;
-//     for (int k = 0; k < strlen(command);k++)
-//     {
-//         if (command[k] == '|')
-//         {
-//             pipes++;
-//         } 
-//     }
-//     char **argv[pipes];
-//     char *token;
-//     int i = 0;
-//     int k = 0;
-//     int amper , redirect , redirecterr;
-//     char *outfile;
-//     token = strtok (command," ");
-//     while (token != NULL)
-//     {
-//         argv[i][k] = token;
-//         token = strtok (NULL, " ");
-//         k++;
-//         if(!strcmp(token, "|"))
-//         {
-//             argv[i][k] = NULL;
-//             k=0;
-//             i++;
-//         }
-//     }
-//     char *output;
-//     char *cmd;
-//     int words_in_command;
-
-// }
