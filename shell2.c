@@ -20,39 +20,6 @@ struct pair vars[100];
 
 int position = 0;
 
-// int insert(char *n_key , char *n_val , int pos)
-// {
-//     printf("pos is : %d\n" , pos);
-//     for(int k = 0; k < pos; k++)
-//     {
-//         if(!strcmp(n_key , vars[k].key))
-//         {
-//             vars[k].val = n_val;
-//             return 0;
-//         }
-//     }
-//     pair tmp_pair;
-//     strcpy(tmp_pair.key,n_key);
-//     strcpy(tmp_pair.val,n_val);
-//     vars[pos] = tmp_pair;
-//     //printf("value : %s inserted into key : %s\n" , vars[position].val , vars[position].key);
-//     return 1;
-// }
-
-
-// char* get(char *n_key , int pos)
-// {
-//     for(int k = 0; k < pos; k++)
-//     {
-//         printf("iter : %d , key : %s , val ; %s\n" , k ,vars[k].key,vars[k].val);
-//         if(!strcmp(n_key , vars[k].key))
-//         {
-//             return vars[k].val;
-//         }
-//     }
-//     return "";
-// }
-
 void handler_func(int sigg);
 int pipe_handler(char *cmd , char *prev_cmd);
 
@@ -83,6 +50,7 @@ int main()
     int curr_argv , pipes;
     status = -999;
     position = 0;
+    int tmp = 0;
 
 
     int rc;
@@ -116,6 +84,7 @@ int main()
         {
             //get command from user 
             printf("%s: ",prompt);
+            fflush(stdin);
             fgets(command, 1024, stdin);
             if (command[0] == '!' && command[1] == '!')
             {
@@ -141,29 +110,45 @@ int main()
                     {
                         // printf("im here1\n");
                         argv_s[curr_argv] = malloc(k-last);
-                        strncpy(argv_s[curr_argv] , (command+last) , k-last);
-                        last = k+1;
+                        strncpy(argv_s[curr_argv] , (command+last) , k-(last+1));
+                        last = k+2;
                         curr_argv++;
                     }
                 }
                 argv_s[curr_argv] = malloc(strlen(command)-last);
-                strncpy(argv_s[curr_argv] , (command+last) , strlen(command)-last);
+                strcpy(argv_s[curr_argv] , (command+last));
+                printf("argvs:\n");
+                for(int k=0;k<=pipes;k++)
+                {
+                    printf("argv_s[%d] is : %s=\n",k,argv_s[k]);
+                }
                 curr_argv = 0;
                 strcpy(command , argv_s[curr_argv]);
+                // for(int k=0;k<=pipes;k++)
+                // {
+                //     printf("%s=\n",argv_s[k]);
+                // }
+                // break;
+                
             }
         }
+        printf("1 the command are : %s=\n" , command);
         strncpy(prev_command , command , 1024);
-        // command[strlen(command) - 1] = '\0';
         /* parse command line */
         i = 0;
         token = strtok (command," ");
         while (token != NULL)
         {
+            printf("token nember %d is : %s\n",i,token);
             argv[i] = token;
             token = strtok (NULL, " ");
             i++;
         }
         argv[i] = NULL;
+        for(int k=0;k<i;k++)
+        {
+            printf("argv[%d] is : %s\n" , k , argv[k]);
+        }
         /* Is command empty */
         if (argv[0] == NULL)
             continue;
@@ -195,16 +180,19 @@ int main()
             argv[i - 2] = NULL;
             outfile = argv[i - 1];
         }
-        else {redirect = 0; }
 
         //q1 - checks if there is redirect to stderr in this command
-        if (! strcmp(argv[i - 2], "2>")) 
+        else if (! strcmp(argv[i - 2], "2>")) 
         {
             redirecterr = 1;
             argv[i - 2] = NULL;
             outfile = argv[i - 1];
         }
-        else {redirecterr = 0; }
+        else 
+        {
+            redirecterr = 0; 
+            redirect = 0;
+        }
 
         //q2 - checks if the first word of the command is prompt = ...
         if (! strcmp(argv[0], "prompt") && ! strcmp(argv[1], "=")) 
@@ -309,16 +297,16 @@ int main()
                 strcpy(vars[position].key,key_temp);
                 strcpy(vars[position].val,val_temp);
                 position ++;
-                // for(int k = 0; k <position;k++)
-                // {
-                //     printf("pos : %d , key : %s , val :%s\n" , k , vars[k].key , vars[k].val);
-                // }
             }   
             continue;
         }
 
         /* for commands not part of the shell command language */ 
 
+        // for(int k=0;k<=i;k++)
+        // {
+        //     printf("%d : %s=\n" ,k , argv[k]);
+        // }
         if(piping)
         {
             if (fork() == 0) 
@@ -326,10 +314,11 @@ int main()
                 /* redirection of IO ? */
                 if (redirect) 
                 {
-                    fd = creat(outfile, 0660); 
-                    close (STDOUT_FILENO) ; 
-                    dup(fd); 
-                    close(fd); 
+                    // fd = creat(outfile, 0660); 
+                    // close (STDOUT_FILENO) ; 
+                    // dup(fd); 
+                    // close(fd); 
+                    freopen(outfile, "a+", stdout); 
                     /* stdout is now redirected */
                 }
                 else if (redirecterr) 
@@ -338,27 +327,62 @@ int main()
                     close (STDERR_FILENO) ; 
                     dup2(fd , STDERR_FILENO); 
                     close(fd);
+
+                    int fd2 = creat("prev.txt", 0660); 
+                    close (STDOUT_FILENO) ; 
+                    dup(fd2); 
+                    close(fd2); 
+                }
+                else
+                {
+                    system("rm prev.txt");
+                    freopen("prev.txt", "a+", stdout); 
                 }
                 //need to redirect output to the prev_command string
                 execvp(argv[0], argv);
-                curr_argv++;
-                if(curr_argv == pipes)
-                {
-                    for(int k = 0;k<=pipes;k++)
-                    {
-                        free(argv_s[k]);
-                        curr_argv = 0;
-                    }
-                    piping = 0;
-                    pipes = 0;
-                }
             }
             /* parent continues here */
             if (amper == 0)
             {
                 retid = wait(&status);
             }
-            continue;
+            FILE *fp;
+            long lSize;
+            char *buffer;
+            char *file = "prev.txt";
+            fp = fopen ( "prev.txt" , "rb" );
+            if( !fp ) perror(file),exit(1);
+
+            fseek( fp , 0L , SEEK_END);
+            lSize = ftell( fp );
+            rewind( fp );
+
+            /* allocate memory for entire content */
+            buffer = calloc( 1, lSize+1 );
+            if( !buffer ) fclose(fp),fputs("memory alloc fails",stderr),exit(1);
+
+            /* copy the file into the buffer */
+            if( 1!=fread( buffer , lSize, 1 , fp) )
+            fclose(fp),free(buffer),fputs("entire read fails",stderr),exit(1);
+
+            /* do your work here, buffer is a string contains the whole text */
+            //size = (int *)lSize;
+            fclose(fp);
+            strcpy(prev_output,buffer);
+
+
+            curr_argv++;
+            if(curr_argv == pipes)
+            {
+                for(int k = 0;k<=pipes;k++)
+                {
+                    free(argv_s[k]);
+                    curr_argv = 0;
+                }
+                piping = 0;
+                pipes = 0;
+            }
+            //continue;
         }
         else
         {
@@ -367,10 +391,11 @@ int main()
                 /* redirection of IO ? */
                 if (redirect) 
                 {
-                    fd = creat(outfile, 0660); 
-                    close (STDOUT_FILENO) ; 
-                    dup(fd); 
-                    close(fd); 
+                    // fd = creat(outfile, 0660); 
+                    // close (STDOUT_FILENO) ; 
+                    // dup(fd); 
+                    // close(fd); 
+                    freopen(outfile, "a+", stdout); 
                     /* stdout is now redirected */
                 }
                 else if (redirecterr) 
@@ -388,6 +413,11 @@ int main()
             {
                 retid = wait(&status);
             }
+        }
+        tmp++;
+        if(tmp==5)
+        {
+            break;
         }
     }
 }
