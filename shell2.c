@@ -44,10 +44,8 @@ int main()
     char *outfile;
     prompt = "hello";
     int i, fd, amper, redirect, retid, status , redirecterr , position , piping;
-    char *argv[10];
+    char *argv[1000];
     char *argv_s[10];
-    char *prev_output;
-    prev_output= (char*) malloc(4096);
     int curr_argv , pipes;
     status = -999;
     position = 0;
@@ -80,7 +78,10 @@ int main()
         {
             printf("im here\n");
             strcpy(command , argv_s[curr_argv]);
-            strcat(command , string);
+            strcat(command , " ");
+            strcat(command , "prev.txt");
+
+            // printf("prev output is : \n%s\n" , prev_output);
         }
         else
         {
@@ -119,11 +120,11 @@ int main()
                 }
                 argv_s[curr_argv] = malloc(strlen(command)-last);
                 strcpy(argv_s[curr_argv] , (command+last));
-                printf("argvs:\n");
-                for(int k=0;k<=pipes;k++)
-                {
-                    printf("argv_s[%d] is : %s=\n",k,argv_s[k]);
-                }
+                // printf("argvs:\n");
+                // for(int k=0;k<=pipes;k++)
+                // {
+                //     printf("argv_s[%d] is : %s=\n",k,argv_s[k]);
+                // }
                 curr_argv = 0;
                 strcpy(command , argv_s[curr_argv]);
                 // for(int k=0;k<=pipes;k++)
@@ -134,23 +135,23 @@ int main()
                 
             }
         }
-        printf("1 the command are : %s=\n" , command);
+        printf("the command are : \n%s\n" , command);
         strncpy(prev_command , command , 1024);
         /* parse command line */
         i = 0;
         token = strtok (command," ");
         while (token != NULL)
         {
-            printf("token nember %d is : %s\n",i,token);
+            //printf("token nember %d is : %s\n",i,token);
             argv[i] = token;
             token = strtok (NULL, " ");
             i++;
         }
         argv[i] = NULL;
-        for(int k=0;k<i;k++)
-        {
-            printf("argv[%d] is : %s\n" , k , argv[k]);
-        }
+        // for(int k=0;k<i;k++)
+        // {
+        //     printf("argv[%d] is : %s\n" , k , argv[k]);
+        // }
         /* Is command empty */
         if (argv[0] == NULL)
             continue;
@@ -346,8 +347,7 @@ int main()
                 }
                 else
                 {
-                    system("rm prev.txt");
-                    freopen("prev.txt", "a+", stdout); 
+                    freopen("prevtmp.txt", "a+", stdout); 
                 }
                 //need to redirect output to the prev_command string
                 execvp(argv[0], argv);
@@ -357,32 +357,8 @@ int main()
             {
                 retid = wait(&status);
             }
-            FILE *fp;
-            long lSize;
-            char *buffer;
-            char *file = "prev.txt";
-            fp = fopen ( "prev.txt" , "rb" );
-            if( !fp ) perror(file),exit(1);
-
-            fseek( fp , 0L , SEEK_END);
-            lSize = ftell( fp );
-            rewind( fp );
-
-            /* allocate memory for entire content */
-            buffer = calloc( 1, lSize+1 );
-            if( !buffer ) fclose(fp),fputs("memory alloc fails",stderr),exit(1);
-
-            /* copy the file into the buffer */
-            if( 1!=fread( buffer , lSize, 1 , fp) )
-            fclose(fp),fputs("entire read fails",stderr),exit(1);
-
-            /* do your work here, buffer is a string contains the whole text */
-            //size = (int *)lSize;
-            fclose(fp);
-
-            strcpy(prev_output,buffer);
-            printf("prev output is : \n%s\n" , prev_output);
-            free(buffer);
+            system("rm prev.txt");
+            system("cat prevtmp.txt > prev.txt");
 
 
             curr_argv++;
