@@ -37,7 +37,7 @@ int sig = 0;
 
 int main() 
 {
-    char string[1024];
+    // char string[1024];
     char command[1024];
     char prev_command[1024];
     char *token;
@@ -76,12 +76,9 @@ int main()
     {
         if(piping)
         {
-            printf("im here\n");
             strcpy(command , argv_s[curr_argv]);
             strcat(command , " ");
             strcat(command , "prev.txt");
-
-            // printf("prev output is : \n%s\n" , prev_output);
         }
         else
         {
@@ -135,8 +132,8 @@ int main()
                 
             }
         }
-        printf("the command are : \n%s\n" , command);
         strncpy(prev_command , command , 1024);
+        printf("the command are : %s\n" , command);
         /* parse command line */
         i = 0;
         token = strtok (command," ");
@@ -319,7 +316,7 @@ int main()
         // {
         //     printf("%d : %s=\n" ,k , argv[k]);
         // }
-        if(piping && curr_argv <= pipes)
+        if(piping && curr_argv < pipes)
         {
             if (fork() == 0) 
             { 
@@ -357,8 +354,12 @@ int main()
             {
                 retid = wait(&status);
             }
-            system("rm prev.txt");
+            if (access("prev.txt", 0) == 0) 
+            {
+                system("rm prev.txt");
+            }
             system("cat prevtmp.txt > prev.txt");
+            system("rm prevtmp.txt");
 
 
             curr_argv++;
@@ -393,7 +394,7 @@ int main()
             {
                 retid = wait(&status);
             }
-            if(curr_argv > pipes)
+            if(curr_argv == pipes)
             {
                 for(int k = 0;k<=pipes;k++)
                 {
@@ -402,12 +403,15 @@ int main()
                 curr_argv = 0;
                 piping = 0;
                 pipes = 0;
+                if (access("prev.txt", 0) == 0) 
+                {
+                    system("rm prev.txt");
+                }
+                if (access("prevtmp.txt", 0) == 0) 
+                {
+                    system("rm prevtmp.txt");
+                }
             }
-        }
-        tmp++;
-        if(tmp==5)
-        {
-            break;
         }
     }
 }
