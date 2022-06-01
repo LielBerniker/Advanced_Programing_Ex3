@@ -37,7 +37,6 @@ int sig = 0;
 
 int main() 
 {
-    // char string[1024];
     char command[1024];
     char prev_command[1024];
     char *token;
@@ -72,6 +71,11 @@ int main()
     piping = 0;
     pipes = 0;
     curr_argv = 0;
+    for (size_t i = 0; i < 10; i++)
+    {
+       argv_s[i] = malloc(1024);
+    }
+    
     while (1)
     {
         if(piping)
@@ -97,7 +101,10 @@ int main()
                 if (command[k] == '|')
                 {
                     pipes++;
-                    if(!piping){piping = 1;}
+                    if(!piping)
+                    {
+                        piping = 1;
+                    }
                 } 
             }
             //if there is | in the new command - get into piping stage ,  and initalize the variables.
@@ -108,32 +115,19 @@ int main()
                 {
                     if(command[k] == '|')
                     {
-                        // printf("im here1\n");
-                        argv_s[curr_argv] = malloc(k-last);
                         strncpy(argv_s[curr_argv] , (command+last) , k-(last+1));
                         last = k+2;
                         curr_argv++;
                     }
                 }
-                argv_s[curr_argv] = malloc(strlen(command)-last);
                 strcpy(argv_s[curr_argv] , (command+last));
-                // printf("argvs:\n");
-                // for(int k=0;k<=pipes;k++)
-                // {
-                //     printf("argv_s[%d] is : %s=\n",k,argv_s[k]);
-                // }
                 curr_argv = 0;
                 strcpy(command , argv_s[curr_argv]);
-                // for(int k=0;k<=pipes;k++)
-                // {
-                //     printf("%s=\n",argv_s[k]);
-                // }
-                // break;
                 
             }
         }
         strncpy(prev_command , command , 1024);
-        printf("the command are : %s\n" , command);
+        // printf("the command are : %s\n" , command);
         /* parse command line */
         i = 0;
         token = strtok (command," ");
@@ -161,13 +155,12 @@ int main()
                 free(vars[k].key);
                 free(vars[k].val);
             }
-            if(piping)
-            {
-                for (size_t j = 0; j<=pipes; j++)
+          
+                for (size_t j = 0; j<10; j++)
                 {
                     free(argv_s[j]);
                 }
-            }
+            
             return 0;
         }
 
@@ -396,9 +389,9 @@ int main()
             }
             if(curr_argv == pipes)
             {
-                for(int k = 0;k<=pipes;k++)
+                for(int k = 0;k<10;k++)
                 {
-                    free(argv_s[k]);
+                     memset(argv_s[k], '\0', 1024*sizeof(char));
                 }
                 curr_argv = 0;
                 piping = 0;
