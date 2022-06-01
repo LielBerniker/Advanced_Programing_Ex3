@@ -127,40 +127,31 @@ int main()
             }
         }
         strncpy(prev_command , command , 1024);
-        // printf("the command are : %s\n" , command);
         /* parse command line */
         i = 0;
         token = strtok (command," ");
         while (token != NULL)
         {
-            //printf("token nember %d is : %s\n",i,token);
             argv[i] = token;
             token = strtok (NULL, " ");
             i++;
         }
         argv[i] = NULL;
-        // for(int k=0;k<i;k++)
-        // {
-        //     printf("argv[%d] is : %s\n" , k , argv[k]);
-        // }
-        /* Is command empty */
         if (argv[0] == NULL)
             continue;
 
         //q7 - checks if the first word of the command is quit
-        if (! strcmp(argv[0], "quit")) 
+        if (! strcmp(argv[0], "quit" && !argv[1])) 
         {
             for(int k = 0;k<position;k++)
             {
                 free(vars[k].key);
                 free(vars[k].val);
             }
-          
-                for (size_t j = 0; j<10; j++)
-                {
-                    free(argv_s[j]);
-                }
-            
+            for (size_t j = 0; j<10; j++)
+            {
+                free(argv_s[j]);
+            }
             return 0;
         }
 
@@ -170,31 +161,33 @@ int main()
             amper = 1;
             argv[i - 1] = NULL;
         }
-        else 
+        else
+        {
             amper = 0; 
+        } 
+            
 
         //checks if there is redirect in this command
         if(i>=2)
         {
-        if (! strcmp(argv[i - 2], ">")) 
-        {
-            redirect = 1;
-            argv[i - 2] = NULL;
-            outfile = argv[i - 1];
-        }
-
-        //q1 - checks if there is redirect to stderr in this command
-        else if (! strcmp(argv[i - 2], "2>")) 
-        {
-            redirecterr = 1;
-            argv[i - 2] = NULL;
-            outfile = argv[i - 1];
-        }
-        else 
-        {
-            redirecterr = 0; 
-            redirect = 0;
-        }
+            if (! strcmp(argv[i - 2], ">")) 
+            {
+                redirect = 1;
+                argv[i - 2] = NULL;
+                outfile = argv[i - 1];
+            }
+            //q1 - checks if there is redirect to stderr in this command
+            else if (! strcmp(argv[i - 2], "2>")) 
+            {
+                redirecterr = 1;
+                argv[i - 2] = NULL;
+                outfile = argv[i - 1];
+            }
+            else 
+            {
+                redirecterr = 0; 
+                redirect = 0;
+            }
         }
         //q2 - checks if the first word of the command is prompt = ...
         if (! strcmp(argv[0], "prompt") && ! strcmp(argv[1], "=")) 
@@ -365,6 +358,14 @@ int main()
                 /* redirection of IO ? */
                 if (redirect) 
                 {
+                     if (access(outfile, 0) == 0) 
+                    {
+                        char *tmp = "rm";
+                        printf("tmp 1 is : %s\n" , tmp);
+                        strcat(tmp , outfile);
+                        printf("tmp 2 is : %s\n" , tmp);
+                        system(tmp);
+                    }
                     // fd = creat(outfile, 0660); 
                     // close (STDOUT_FILENO) ; 
                     // dup(fd); 
