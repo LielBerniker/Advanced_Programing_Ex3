@@ -1,8 +1,0 @@
-xxx
-total 52
--rw-rw-r-- 1 yair yair     4 Jun  1 11:05 a.txt
--rw-rw-r-- 1 yair yair    66 May 25 08:40 Makefile
--rwxrwxr-x 1 yair yair 21720 Jun  1 11:01 myshell
--rw-rw-r-- 1 yair yair  1032 May 25 08:40 shell1.c
--rw-rw-r-- 1 yair yair 11466 Jun  1 11:02 shell2.c
--rw-rw-r-- 1 yair yair  2725 May 25 14:10 shell3.c
