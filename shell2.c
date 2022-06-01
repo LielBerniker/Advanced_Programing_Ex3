@@ -39,13 +39,14 @@ int main()
 {
     prompt = malloc(1024);
     char *tmpp = malloc(1024);
+    char *tmp_command = malloc(1024);
     char *ans = malloc(1024);
     char command[1024];
     char prev_command[1024];
     char *token;
     char *outfile;
-    prompt = "hello";
-    int i, fd, amper, redirect, retid, status , redirecterr , position , piping;
+    strcpy(prompt,"hello");
+    int i, fd, amper, redirect, retid, status , redirecterr , position , piping , quit;
     char *argv[1000];
     char *argv_s[10];
     int curr_argv , pipes;
@@ -146,6 +147,7 @@ int main()
         //q7 - checks if the first word of the command is quit
         if (! strcmp(argv[0], "quit") && !argv[1]) 
         {
+            quit = 1;
             for(int k = 0;k<position;k++)
             {
                 free(vars[k].key);
@@ -155,7 +157,6 @@ int main()
             {
                 free(argv_s[j]);
             }
-            return 0;
         }
 
         /* Does command line end with & */ 
@@ -219,7 +220,7 @@ int main()
         //q2 - checks if the first word of the command is prompt = ...
         if (! strcmp(argv[0], "prompt") && ! strcmp(argv[1], "=")) 
         {
-            memset(prompt , '\0' , 1024);
+            memset(prompt , '\0' , strlen(prompt));
             strcpy(prompt , argv[2]);
             continue;
         }
@@ -373,6 +374,7 @@ int main()
         }
 
         /* for commands not part of the shell command language */ 
+        
         if(piping && curr_argv < pipes)
         {
             if (fork() == 0) 
@@ -406,17 +408,16 @@ int main()
                     freopen("prevtmp.txt", "a+", stdout); 
                 }
                 //need to redirect output to the prev_command string
-                char tmp_cmd2[1024] = "";
-                
-                //printf("command is : %s\n" , command);
+                memset(tmp_command , '\0' , strlen(tmp_command));
                 int k = 0;
                 while(argv[k])
                 {
-                    strcat(tmp_cmd2 , argv[k]);
-                    strcat(tmp_cmd2 , " ");
+                    strcat(tmp_command , argv[k]);
+                    strcat(tmp_command , " ");
                     k++;
                 }
-                system(tmp_cmd2);
+                system(tmp_command);
+                continue;
             }
             /* parent continues here */
             if (amper == 0)
@@ -446,11 +447,11 @@ int main()
         else
         {
             if (fork() == 0) 
-            { 
+            {
                 /* redirection of IO ? */
                 if (redirect) 
                 {
-                     if (access(outfile, 0) == 0) 
+                    if (access(outfile, 0) == 0) 
                     {
                         memset(tmpp, '\0', 1024*sizeof(char));
                         strcat(tmpp , "rm ");
@@ -472,17 +473,21 @@ int main()
                     close(fd); 
                     /* stdout is now redirected */
                 } 
-                char *tmp_cmd3;
+                int j = 0;
+                
+                //printf("command is : %s\n" , command);
+                memset(tmp_command , '\0' , strlen(tmp_command));
                 
                 //printf("command is : %s\n" , command);
                 int k = 0;
                 while(argv[k])
                 {
-                    strcat(tmp_cmd3 , argv[k]);
-                    strcat(tmp_cmd3 , " ");
+                    strcat(tmp_command , argv[k]);
+                    strcat(tmp_command , " ");
                     k++;
                 }
-                system(tmp_cmd3);
+                system(tmp_command);
+                continue;
             }
             /* parent continues here */
             if (amper == 0)
