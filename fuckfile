@@ -1,0 +1,9 @@
+Wed 01 Jun 2022 16:46:17 IDT
+total 60
+-rw-rw-r-- 1 yair yair    29 Jun  1 16:46 fuckfile
+-rw-rw-r-- 1 yair yair    58 Jun  1 16:02 Makefile
+-rw-rw-r-- 1 yair yair    58 Jun  1 16:34 myfile
+-rwxrwxr-x 1 yair yair 21704 Jun  1 16:45 shell
+-rw-rw-r-- 1 yair yair  1032 May 25 08:40 shell1.c
+-rw-rw-r-- 1 yair yair 14844 Jun  1 16:45 shell2.c
+-rw-rw-r-- 1 yair yair  2725 May 25 14:10 shell3.c

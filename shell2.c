@@ -32,11 +32,12 @@ void reset_the_terminal(void)
 
 sig_atomic_t the_flag = 0;
 
-char *prompt = "hello";
+char *prompt;
 int sig = 0;
 
 int main() 
 {
+    prompt = malloc(1024);
     char *tmpp = malloc(1024);
     char *ans = malloc(1024);
     char command[1024];
@@ -190,11 +191,36 @@ int main()
                 redirecterr = 0; 
                 redirect = 0;
             }
+            // if(! strcmp(argv[i - 2], ">>"))
+            // {
+            //     char tmp_cmd2[1024] = "";
+                
+            //     //printf("command is : %s\n" , command);
+            //     int k = 0;
+            //     while(argv[k])
+            //     {
+            //         strcat(tmp_cmd2 , argv[k]);
+            //         strcat(tmp_cmd2 , " ");
+            //         k++;
+            //     }
+            //     system(tmp_cmd2);
+            //     if(piping)
+            //     {
+            //         if (access("prev.txt", 0) == 0) 
+            //         {
+            //             system("rm prev.txt");
+            //         }
+            //         curr_argv++;
+            //         continue;
+            //     }
+            //     continue;
+            // }
         }
         //q2 - checks if the first word of the command is prompt = ...
-        if (! strcmp(argv[0], "prompt") && ! strcmp(argv[1], "=") && argv[2] && !argv[3]) 
+        if (! strcmp(argv[0], "prompt") && ! strcmp(argv[1], "=")) 
         {
-            prompt = argv[2];
+            memset(prompt , '\0' , 1024);
+            strcpy(prompt , argv[2]);
             continue;
         }
 
@@ -380,7 +406,17 @@ int main()
                     freopen("prevtmp.txt", "a+", stdout); 
                 }
                 //need to redirect output to the prev_command string
-                execvp(argv[0], argv);
+                char tmp_cmd2[1024] = "";
+                
+                //printf("command is : %s\n" , command);
+                int k = 0;
+                while(argv[k])
+                {
+                    strcat(tmp_cmd2 , argv[k]);
+                    strcat(tmp_cmd2 , " ");
+                    k++;
+                }
+                system(tmp_cmd2);
             }
             /* parent continues here */
             if (amper == 0)
@@ -436,7 +472,17 @@ int main()
                     close(fd); 
                     /* stdout is now redirected */
                 } 
-                execvp(argv[0], argv);
+                char *tmp_cmd3;
+                
+                //printf("command is : %s\n" , command);
+                int k = 0;
+                while(argv[k])
+                {
+                    strcat(tmp_cmd3 , argv[k]);
+                    strcat(tmp_cmd3 , " ");
+                    k++;
+                }
+                system(tmp_cmd3);
             }
             /* parent continues here */
             if (amper == 0)

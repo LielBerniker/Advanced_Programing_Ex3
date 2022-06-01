@@ -1,6 +1,6 @@
-all: myshell
+all: shell
 
-myshell:
-	gcc -o myshell shell2.c
+shell:
+	gcc -o shell shell2.c
 clean:
-	rm myshell
+	rm shell
