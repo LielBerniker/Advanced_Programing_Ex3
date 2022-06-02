@@ -214,7 +214,7 @@ int main()
         {
             if(status == -999)
             {
-                printf("this is the first command!");
+                printf("this is the first command!\n");
                 continue;
             }
             if(piping)
@@ -351,7 +351,8 @@ int main()
         /* for commands not part of the shell command language */ 
         if(piping && curr_argv < pipes)
         {
-           
+            if (fork() == 0) 
+            { 
                 /* redirection of IO ? */
                 if (redirect) 
                 {
@@ -380,48 +381,38 @@ int main()
                 {
                     freopen("prevtmp.txt", "a+", stdout); 
                 }
-                //execvp(argv[0], argv);
+                execvp(argv[0], argv);
 
-                memset(tmp_command , '\0' , 1024);
-
-                //printf("command is : %s\n" , command);
-                int j = 0;
-                while(argv[j])
-                {
-                    strcat(tmp_command , argv[j]);
-                    strcat(tmp_command , " ");
-                    j++;
-                }
-                if(redirect)
-                {
-                    if (access("prev.txt", 0) == 0) 
-                    {
-                        system("rm prev.txt");
-                    }
-                    system("touch prev.txt");
-                }
-                else
-                {
-                    if (access("prev.txt", 0) == 0) 
-                    {
-                        system("rm prev.txt");
-                    }
-                    system("cat prevtmp.txt > prev.txt");
-                    system("rm prevtmp.txt");
-                }
-                curr_argv++;
-                status = system(tmp_command);
-                //continue;
-            
+            }
             /* parent continues here */
-            // if (amper == 0)
-            // {
-            //     retid = wait(&status);
-            // }
+            if (amper == 0)
+            {
+                retid = wait(&status);
+            }
+            if(redirect)
+            {
+                if (access("prev.txt", 0) == 0) 
+                {
+                    system("rm prev.txt");
+                }
+                system("touch prev.txt");
+            }
+            else
+            {
+                if (access("prev.txt", 0) == 0) 
+                {
+                    system("rm prev.txt");
+                }
+                system("cat prevtmp.txt > prev.txt");
+                system("rm prevtmp.txt");
+            }
+            curr_argv++;
             //continue;
         }
-        else
+        else if((curr_argv == pipes && curr_argv>0) || redirect || redirecterr)
         {
+            if (fork() == 0) 
+            { 
                 /* redirection of IO ? */
                 if (redirect) 
                 {
@@ -447,7 +438,33 @@ int main()
                     close(fd); 
                     /* stdout is now redirected */
                 } 
-                //execvp(argv[0], argv);
+                execvp(argv[0], argv);
+            }
+            /* parent continues here */
+            if (amper == 0)
+            {
+                retid = wait(&status);
+            }
+            if(curr_argv == pipes)
+            {
+                for(int k = 0;k<10;k++)
+                {
+                     memset(argv_s[k], '\0', 1024*sizeof(char));
+                }
+                curr_argv = 0;
+                piping = 0;
+                pipes = 0;
+                if (access("prev.txt", 0) == 0) 
+                {
+                    system("rm prev.txt");
+                }
+                if (access("prevtmp.txt", 0) == 0) 
+                {
+                    system("rm prevtmp.txt");
+                }
+            }
+        }
+        else{
 
                 memset(tmp_command , '\0' , 1024);
 
@@ -460,32 +477,7 @@ int main()
                     strcat(tmp_command , " ");
                     j++;
                 }
-                if(curr_argv == pipes)
-                {
-                    for(int k = 0;k<10;k++)
-                    {
-                        memset(argv_s[k], '\0', 1024*sizeof(char));
-                    }
-                    curr_argv = 0;
-                    piping = 0;
-                    pipes = 0;
-                    if (access("prev.txt", 0) == 0) 
-                    {
-                        system("rm prev.txt");
-                    }
-                    if (access("prevtmp.txt", 0) == 0) 
-                    {
-                        system("rm prevtmp.txt");
-                    }
-                }
                 status = system(tmp_command);
-            
-            /* parent continues here */
-            // if (amper == 0)
-            // {
-            //     retid = wait(&status);
-            // }
-            
         }
     }
 }
@@ -494,6 +486,6 @@ void handler_func(int sigg)
     sig = 1;
     signal(SIGINT , handler_func);
     printf("\nyou typed Control-C!\n");
-    printf("%s:" , prompt);
+    printf("%s :" , prompt);
     fflush(stdout);
 }
