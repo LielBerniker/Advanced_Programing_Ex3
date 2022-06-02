@@ -381,8 +381,20 @@ int main()
                 {
                     freopen("prevtmp.txt", "a+", stdout); 
                 }
-                execvp(argv[0], argv);
+                //execvp(argv[0], argv);
 
+                memset(tmp_command , '\0' , 1024);
+
+                //printf("command is : %s\n" , command);
+                int j = 0;
+                while(argv[j])
+                {
+                    strcat(tmp_command , argv[j]);
+                    strcat(tmp_command , " ");
+                    j++;
+                }
+                status = system(tmp_command);
+                continue;
             }
             /* parent continues here */
             if (amper == 0)
@@ -438,7 +450,30 @@ int main()
                     close(fd); 
                     /* stdout is now redirected */
                 } 
-                execvp(argv[0], argv);
+                //execvp(argv[0], argv);
+
+                memset(tmp_command , '\0' , 1024);
+
+                //printf("command is : %s\n" , command);
+                int k = 0;
+                while(argv[k])
+                {
+                    strcat(tmp_command , argv[k]);
+                    strcat(tmp_command , " ");
+                    k++;
+                }
+                status = system(tmp_command);
+                continue;
+
+
+                int j = 0;
+                while(argv[j])
+                {
+                    strcat(tmp_command , argv[j]);
+                    strcat(tmp_command , " ");
+                    j++;
+                }
+                system(tmp_command);
             }
             /* parent continues here */
             if (amper == 0)
