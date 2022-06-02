@@ -37,16 +37,16 @@ int sig = 0;
 
 int main() 
 {
-    prompt = malloc(1024);
-    char *tmpp = malloc(1024);
+    char *prompt_temp  = malloc(1024);
     char *tmp_command = malloc(1024);
+    char *tmpp = malloc(1024);
     char *ans = malloc(1024);
     char command[1024];
     char prev_command[1024];
     char *token;
     char *outfile;
-    strcpy(prompt,"hello");
-    int i, fd, amper, redirect, retid, status , redirecterr , position , piping , quit;
+    prompt = "hello";
+    int i, fd, amper, redirect, retid, status , redirecterr , position , piping;
     char *argv[1000];
     char *argv_s[10];
     int curr_argv , pipes;
@@ -96,9 +96,13 @@ int main()
             fgets(command, 1024, stdin);
             if (command[0] == '!' && command[1] == '!')
             {
+
                 strncpy(command , prev_command , 1024);
+                command[strlen(command)] = '\0';
             }
-            command[strlen(command) - 1] = '\0';
+            else{
+            command[strlen(command)-1] = '\0';
+            }
             //checks if there is | in command , and counts the pipes
             for (int k = 0; k < strlen(command);k++)
             {
@@ -147,7 +151,6 @@ int main()
         //q7 - checks if the first word of the command is quit
         if (! strcmp(argv[0], "quit") && !argv[1]) 
         {
-            quit = 1;
             for(int k = 0;k<position;k++)
             {
                 free(vars[k].key);
@@ -157,6 +160,8 @@ int main()
             {
                 free(argv_s[j]);
             }
+            exit(0);
+            return 0;
         }
 
         /* Does command line end with & */ 
@@ -192,36 +197,13 @@ int main()
                 redirecterr = 0; 
                 redirect = 0;
             }
-            // if(! strcmp(argv[i - 2], ">>"))
-            // {
-            //     char tmp_cmd2[1024] = "";
-                
-            //     //printf("command is : %s\n" , command);
-            //     int k = 0;
-            //     while(argv[k])
-            //     {
-            //         strcat(tmp_cmd2 , argv[k]);
-            //         strcat(tmp_cmd2 , " ");
-            //         k++;
-            //     }
-            //     system(tmp_cmd2);
-            //     if(piping)
-            //     {
-            //         if (access("prev.txt", 0) == 0) 
-            //         {
-            //             system("rm prev.txt");
-            //         }
-            //         curr_argv++;
-            //         continue;
-            //     }
-            //     continue;
-            // }
         }
         //q2 - checks if the first word of the command is prompt = ...
-        if (! strcmp(argv[0], "prompt") && ! strcmp(argv[1], "=")) 
+        if (! strcmp(argv[0], "prompt") && ! strcmp(argv[1], "=") && argv[2] && !argv[3]) 
         {
-            memset(prompt , '\0' , strlen(prompt));
-            strcpy(prompt , argv[2]);
+            memset(prompt_temp , '\0', 1024);
+            strcpy(prompt_temp ,argv[2]);
+            prompt = prompt_temp;
             continue;
         }
 
@@ -283,7 +265,7 @@ int main()
                     continue;
 
                 }
-                printf("%s" , ans);
+                printf("%s\n" , ans);
                 continue;
             }
             else
@@ -300,19 +282,11 @@ int main()
                 }
             }
         }
-        else if (! strcmp(argv[0], "echo"))
-        {
-            int i=2;
-            while(argv[i])
-            {
-                argv[i] = NULL;
-            }
-        }
+ 
 
         //q5 - checks if the first word of the command is chdir
         if (! strcmp(argv[0], "cd") && argv[1]) 
         {
-            if(!argv[2]){continue;}
             chdir(argv[1]);
             continue;
         }
@@ -353,6 +327,7 @@ int main()
             char val_temp[1024];
             strcat(key_temp,argv[1]);
             fgets(val_temp, 1024, stdin);
+            val_temp[strlen(val_temp)-1] = '\0';
             for(int k = 0; k < position; k++)
             {
                 if(!strcmp(key_temp , vars[k].key))
@@ -374,7 +349,6 @@ int main()
         }
 
         /* for commands not part of the shell command language */ 
-        
         if(piping && curr_argv < pipes)
         {
             if (fork() == 0) 
@@ -407,17 +381,8 @@ int main()
                 {
                     freopen("prevtmp.txt", "a+", stdout); 
                 }
-                //need to redirect output to the prev_command string
-                memset(tmp_command , '\0' , strlen(tmp_command));
-                int k = 0;
-                while(argv[k])
-                {
-                    strcat(tmp_command , argv[k]);
-                    strcat(tmp_command , " ");
-                    k++;
-                }
-                system(tmp_command);
-                continue;
+                execvp(argv[0], argv);
+
             }
             /* parent continues here */
             if (amper == 0)
@@ -447,11 +412,11 @@ int main()
         else
         {
             if (fork() == 0) 
-            {
+            { 
                 /* redirection of IO ? */
                 if (redirect) 
                 {
-                    if (access(outfile, 0) == 0) 
+                     if (access(outfile, 0) == 0) 
                     {
                         memset(tmpp, '\0', 1024*sizeof(char));
                         strcat(tmpp , "rm ");
@@ -473,21 +438,7 @@ int main()
                     close(fd); 
                     /* stdout is now redirected */
                 } 
-                int j = 0;
-                
-                //printf("command is : %s\n" , command);
-                memset(tmp_command , '\0' , strlen(tmp_command));
-                
-                //printf("command is : %s\n" , command);
-                int k = 0;
-                while(argv[k])
-                {
-                    strcat(tmp_command , argv[k]);
-                    strcat(tmp_command , " ");
-                    k++;
-                }
-                system(tmp_command);
-                continue;
+                execvp(argv[0], argv);
             }
             /* parent continues here */
             if (amper == 0)
