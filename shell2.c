@@ -1,3 +1,4 @@
+  
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <fcntl.h>
@@ -82,11 +83,31 @@ int main()
     
     while (1)
     {
+        if(curr_argv > pipes)
+            {
+                for(int k = 0;k<10;k++)
+                {
+                     memset(argv_s[k], '\0', 1024*sizeof(char));
+                }
+                curr_argv = 0;
+                piping = 0;
+                pipes = 0;
+                if (access("prev.txt", 0) == 0) 
+                {
+                    system("rm prev.txt");
+                }
+                if (access("prevtmp.txt", 0) == 0) 
+                {
+                    system("rm prevtmp.txt");
+                }
+            }
+        if (!access("prev.txt", 0) == 0) 
+                {
+                    system("touch prev.txt");
+                }
         if(piping)
         {
             strcpy(command , argv_s[curr_argv]);
-            strcat(command , " ");
-            strcat(command , "prev.txt");
         }
         else
         {
@@ -149,8 +170,13 @@ int main()
             continue;
 
         //q7 - checks if the first word of the command is quit
-        if (! strcmp(argv[0], "quit") && !argv[1]) 
+        if (! strcmp(argv[0], "quit")) 
         {
+            if(argv[1])
+            {
+                printf("error - bad sbad syntax\n");
+                continue;
+            }
             for(int k = 0;k<position;k++)
             {
                 free(vars[k].key);
@@ -160,6 +186,11 @@ int main()
             {
                 free(argv_s[j]);
             }
+                free(prompt_temp);
+                free(tmp_command );
+                free(tmpp);
+                free(ans );
+
             exit(0);
             return 0;
         }
@@ -199,8 +230,35 @@ int main()
             }
         }
         //q2 - checks if the first word of the command is prompt = ...
-        if (! strcmp(argv[0], "prompt") && ! strcmp(argv[1], "=") && argv[2] && !argv[3]) 
+        if (! strcmp(argv[0], "prompt")) 
         {
+            if( !argv[1] || strcmp(argv[1], "=") ||  !argv[2] || argv[3])
+            {
+                printf("error - bad sbad syntax\n");
+                if(piping)
+                {
+                for(int k = 0;k<10;k++)
+                {
+                     memset(argv_s[k], '\0', 1024*sizeof(char));
+                }
+                curr_argv = 0;
+                piping = 0;
+                pipes = 0;
+                if (access("prev.txt", 0) == 0) 
+                {
+                    system("rm prev.txt");
+                }
+                if (access("prevtmp.txt", 0) == 0) 
+                {
+                    system("rm prevtmp.txt");
+                }
+                }
+                continue;
+            }
+            if(piping)
+            {
+                curr_argv++;
+            }
             memset(prompt_temp , '\0', 1024);
             strcpy(prompt_temp ,argv[2]);
             prompt = prompt_temp;
@@ -210,48 +268,56 @@ int main()
         //q3 is already works with the basic implementation
 
         //q4 - checks if the first word of the command is echo $?
-        if (! strcmp(argv[0], "echo") && ! strcmp(argv[1], "$?")) 
+        if (! strcmp(argv[0], "echo") && ! strcmp(argv[1], "$?") && !argv[2]) 
         {
-            if(status == -999)
+            if(piping && curr_argv<pipes)
             {
-                printf("this is the first command!\n");
-                continue;
-            }
-            if(piping)
-            {
-                if (access("prev.txt", 0) == 0) 
+            if (access("prev.txt", 0) == 0) 
                 {
                     system("rm prev.txt");
                 }
-                char st[6];
+            char st[30];
+            if(status == -999)
+            {
+                sprintf(st,"%s","this is the first command!\n");
+            }
+            else{
                 sprintf(st,"%d",status);
+            }
                 char tmp_cmd[100] = "echo ";
                 strcat(tmp_cmd , st);
                 strcat(tmp_cmd , " > prev.txt");
                 system(tmp_cmd);
                 curr_argv++;
                 continue;
-
+            }
+           else
+            {
+             if(status == -999)
+            {
+                printf("this is the first command!\n");
+                continue;
             }
             printf("%d\n" , status);
             continue;
+            }
         }
-        else if (! strcmp(argv[0], "echo") && argv[1][0]=='$') 
+        else if (! strcmp(argv[0], "echo") && argv[1][0]=='$' && !argv[2]) 
         {
             int exist = 0;
             for(int k = 0; k < position; k++)
             {
-                //printf("iter : %d , key : %s , val ; %s\n" , k ,vars[k].key,vars[k].val);
                 if(!strcmp(argv[1] , vars[k].key))
                 {
                     memset(ans , '\0', 1024);
                     strcpy(ans,vars[k].val);
                     exist = 1;
+                    break;
                 }
             }
             if(exist)
             {
-                if(piping)
+                if(piping && curr_argv<pipes)
                 {
                     if (access("prev.txt", 0) == 0) 
                     {
@@ -270,23 +336,57 @@ int main()
             }
             else
             {
-                if(piping)
+                if(piping && curr_argv<pipes)
                 {
                     if (access("prev.txt", 0) == 0) 
                     {
                         system("rm prev.txt");
                     }
+                                        char tmp_cmd[100] = "echo ";
+                    strcat(tmp_cmd , argv[1]);
+                    strcat(tmp_cmd , " > prev.txt");
+                    system(tmp_cmd);
                     curr_argv++;
                     continue;
-
+                }
+                else{
+                    printf("%s\n" , argv[1]);
+                    continue;
                 }
             }
         }
  
 
         //q5 - checks if the first word of the command is chdir
-        if (! strcmp(argv[0], "cd") && argv[1]) 
+        if (! strcmp(argv[0], "cd")) 
         {
+            if( !argv[1] ||  argv[2])
+            {
+                printf("error - bad sbad syntax\n");
+                if(piping)
+                {
+                for(int k = 0;k<10;k++)
+                {
+                     memset(argv_s[k], '\0', 1024*sizeof(char));
+                }
+                curr_argv = 0;
+                piping = 0;
+                pipes = 0;
+                if (access("prev.txt", 0) == 0) 
+                {
+                    system("rm prev.txt");
+                }
+                if (access("prevtmp.txt", 0) == 0) 
+                {
+                    system("rm prevtmp.txt");
+                }
+                }
+                continue;
+            }
+            if(piping)
+            {
+                curr_argv++;
+            }
             chdir(argv[1]);
             continue;
         }
@@ -294,6 +394,29 @@ int main()
         //q10 - checks if the firs word of the command is $...
         if(argv[0][0] == '$')
         {
+            if( strcmp(argv[1], "=") ||  !argv[2] || argv[3])
+            {
+                printf("error - bad sbad syntax\n");
+                if(piping)
+                {
+                for(int k = 0;k<10;k++)
+                {
+                     memset(argv_s[k], '\0', 1024*sizeof(char));
+                }
+                curr_argv = 0;
+                piping = 0;
+                pipes = 0;
+                if (access("prev.txt", 0) == 0) 
+                {
+                    system("rm prev.txt");
+                }
+                if (access("prevtmp.txt", 0) == 0) 
+                {
+                    system("rm prevtmp.txt");
+                }
+                }
+                continue;
+            }
             int exist = 0;
             for(int k = 0; k < position; k++)
             {
@@ -302,7 +425,7 @@ int main()
                     // vars[k]->val = malloc(strlen(argv[2]) +1);
                     strcpy(vars[k].val,argv[2]);
                     exist = 1;
-                    continue;
+                    break;
                 }
             }
             if(!exist)
@@ -313,7 +436,11 @@ int main()
                 strcpy(vars[position].key,argv[0]);
                 strcpy(vars[position].val,argv[2]);
                 position ++;
-            }   
+            }  
+            if(piping)
+            {
+                curr_argv++;
+            } 
             continue;
         }
         
@@ -321,7 +448,29 @@ int main()
         //q11 - checks if the firs word of the command is read...
         if(! strcmp(argv[0], "read")) 
         {
-            // printf("\n");
+            if( !argv[1] || argv[2])
+            {
+                printf("error - bad sbad syntax\n");
+                if(piping)
+                {
+                for(int k = 0;k<10;k++)
+                {
+                     memset(argv_s[k], '\0', 1024*sizeof(char));
+                }
+                curr_argv = 0;
+                piping = 0;
+                pipes = 0;
+                if (access("prev.txt", 0) == 0) 
+                {
+                    system("rm prev.txt");
+                }
+                if (access("prevtmp.txt", 0) == 0) 
+                {
+                    system("rm prevtmp.txt");
+                }
+                }
+                continue;
+            }
             int exist = 0;
             char key_temp[] = "$";
             char val_temp[1024];
@@ -334,7 +483,7 @@ int main()
                 {
                     strcpy(vars[k].val,val_temp);
                     exist = 1;
-                    continue;
+                    break;
                 }
             }
             if(!exist)
@@ -345,42 +494,21 @@ int main()
                 strcpy(vars[position].val,val_temp);
                 position ++;
             }   
+            if(piping)
+            {
+                curr_argv++;
+            }
             continue;
         }
 
         /* for commands not part of the shell command language */ 
         if(piping && curr_argv < pipes)
         {
+            argv[i] = "prev.txt";
             if (fork() == 0) 
             { 
-                /* redirection of IO ? */
-                if (redirect) 
-                {
-                    // fd = creat(outfile, 0660); 
-                    // close (STDOUT_FILENO) ; 
-                    // dup(fd); 
-                    // close(fd); 
-                    freopen(outfile, "a+", stdout); 
-                    /* stdout is now redirected */
-                }
-                else if (redirecterr) 
-                {
-                    // fd = creat(outfile, 0660); 
-                    // close (STDERR_FILENO) ; 
-                    // dup2(fd , STDERR_FILENO); 
-                    // close(fd);
 
-                    // int fd2 = creat("prev.txt", 0660); 
-                    // close (STDOUT_FILENO) ; 
-                    // dup(fd2); 
-                    // close(fd2); 
-                    freopen("prevtmp.txt", "a+", stdout); 
-                    freopen(outfile, "a+", stderr); 
-                }
-                else
-                {
-                    freopen("prevtmp.txt", "a+", stdout); 
-                }
+                freopen("prevtmp.txt", "a+", stdout); 
                 execvp(argv[0], argv);
 
             }
@@ -407,10 +535,13 @@ int main()
                 system("rm prevtmp.txt");
             }
             curr_argv++;
-            //continue;
         }
         else if((curr_argv == pipes && curr_argv>0) || redirect || redirecterr)
         {
+            if(curr_argv == pipes && curr_argv>0)
+            {
+                argv[i] = "prev.txt";
+            }
             if (fork() == 0) 
             { 
                 /* redirection of IO ? */
@@ -423,20 +554,13 @@ int main()
                         strcat(tmpp , outfile);
                         system(tmpp);
                     }
-                    // fd = creat(outfile, 0660); 
-                    // close (STDOUT_FILENO) ; 
-                    // dup(fd); 
-                    // close(fd); 
                     freopen(outfile, "a+", stdout); 
                     /* stdout is now redirected */
                 }
                 else if (redirecterr) 
                 {
-                    fd = creat(outfile, 0660); 
-                    close (STDERR_FILENO) ; 
-                    dup2(fd , STDERR_FILENO); 
-                    close(fd); 
-                    /* stdout is now redirected */
+                 freopen(outfile, "a+", stderr); 
+                    /* stderr is now redirected */
                 } 
                 execvp(argv[0], argv);
             }
@@ -445,30 +569,14 @@ int main()
             {
                 retid = wait(&status);
             }
-            if(curr_argv == pipes)
+            if(curr_argv == pipes && curr_argv>0)
             {
-                for(int k = 0;k<10;k++)
-                {
-                     memset(argv_s[k], '\0', 1024*sizeof(char));
-                }
-                curr_argv = 0;
-                piping = 0;
-                pipes = 0;
-                if (access("prev.txt", 0) == 0) 
-                {
-                    system("rm prev.txt");
-                }
-                if (access("prevtmp.txt", 0) == 0) 
-                {
-                    system("rm prevtmp.txt");
-                }
+                curr_argv++;
             }
         }
         else{
 
                 memset(tmp_command , '\0' , 1024);
-
-                //printf("command is : %s\n" , command)
 
                 int j = 0;
                 while(argv[j])
